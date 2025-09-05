@@ -1,6 +1,17 @@
-# Good Psychopath Mixing Desk – Scenario Dialer
+# Good Psychopath Mixing Desk – Scenario Dialer (root layout)
 
-Deploy on Vercel:
-1) Go to vercel.com → Add New → Project → **Upload**.
-2) Select this folder (zipped).
-3) Framework: Vite; Build: `vite build`; Output: `dist`.
+Type (or pick a preset) for a real-life scenario and the app suggests which trait
+“dials” to move up or down (0–10), visualized as animated bars.
+
+## Run locally
+npm install
+npm run dev
+
+## Build
+npm run build
+
+## Deploy
+Vercel → Import repo
+- Framework: Vite
+- Build: vite build
+- Output: dist
