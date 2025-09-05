@@ -144,7 +144,7 @@ ${kb || "(none)"}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: "gpt-4o",
         temperature: 0.2,
         messages: [
           { role: "system", content: system },
