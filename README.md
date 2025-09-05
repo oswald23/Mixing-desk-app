@@ -1,17 +1,16 @@
-# Good Psychopath Mixing Desk – Scenario Dialer (root layout)
+# Good Psychopath Mixing Desk – AI Only (with optional PDF grounding)
 
-Type (or pick a preset) for a real-life scenario and the app suggests which trait
-“dials” to move up or down (0–10), visualized as animated bars.
-
-## Run locally
-npm install
-npm run dev
-
-## Build
-npm run build
+Type a scenario and (optionally) paste a PDF URL. The app calls a serverless
+endpoint that prompts an LLM to return 0–10 dial levels plus per-trait commentary
+and an overall summary. If a PDF is provided, the model is asked to use it as a
+knowledge base (quotes short snippets when helpful).
 
 ## Deploy
-Vercel → Import repo
-- Framework: Vite
-- Build: vite build
-- Output: dist
+1) In Vercel → Project → Settings → Environment Variables:
+   - `OPENAI_API_KEY` = your API key (Targets: Production + Preview)
+2) Import this repo to Vercel and Deploy (Framework: **Vite**, Build: `vite build`, Output: `dist`).
+
+## Local
+```bash
+npm install
+npm run dev
