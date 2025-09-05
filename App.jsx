@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
-/** ---------- TRAITS ---------- **/
 const TRAITS = [
   { key: "ruthlessness", name: "Ruthlessness" },
   { key: "fearlessness", name: "Fearlessness" },
@@ -15,12 +14,11 @@ const TRAITS = [
   { key: "reducedEmpathy", name: "Reduced empathy" },
   { key: "lackConscience", name: "Lack of conscience" }
 ];
-const NEUTRAL = 5;
 
-/** ---------- HELPERS ---------- **/
+const NEUTRAL = 5;
 const clamp10 = (v) => Math.max(0, Math.min(10, v));
-const levelPct = (v) => `${clamp10(v) * 10}%`;
-const levelColor = (v) => (v >= 7 ? "#22c55e" : v >= 4 ? "#f59e0b" : "#ef4444");
+const pct = (v) => `${clamp10(v) * 10}%`;
+const barColor = (v) => (v >= 7 ? "#22c55e" : v >= 4 ? "#f59e0b" : "#ef4444");
 
 function Legend() {
   return (
@@ -32,17 +30,17 @@ function Legend() {
   );
 }
 
-function BarRow({ name, value }) {
+function Bar({ name, value }) {
   return (
-    <div className="bar-row" aria-label={`${name} level ${value} of 10`}>
+    <div className="bar-row">
       <div className="bar-label">{name}</div>
       <div className="bar-track">
         <motion.div
           className="bar-fill"
           initial={{ width: 0 }}
-          animate={{ width: levelPct(value) }}
-          transition={{ duration: 0.5 }}
-          style={{ background: levelColor(value) }}
+          animate={{ width: pct(value) }}
+          transition={{ duration: 0.45 }}
+          style={{ background: barColor(value) }}
         >
           <span className="bar-inline">{value}</span>
         </motion.div>
@@ -52,15 +50,14 @@ function BarRow({ name, value }) {
   );
 }
 
-/** ---------- APP ---------- **/
 export default function App() {
   const [scenario, setScenario] = useState("");
   const [pdfUrl, setPdfUrl] = useState("");
   const [levels, setLevels] = useState(Object.fromEntries(TRAITS.map(t => [t.key, NEUTRAL])));
   const [rationales, setRationales] = useState({});
   const [summary, setSummary] = useState("");
-  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const recommend = async () => {
     setLoading(true); setErr(""); setSummary(""); setRationales({});
@@ -70,8 +67,18 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scenario, pdfUrl: pdfUrl || undefined })
       });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || "AI error");
+
+      // Robust: first get raw text, then try JSON
+      const raw = await r.text();
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error(raw ? raw.slice(0, 200) : "Non-JSON response from server");
+      }
+
+      if (!r.ok) throw new Error(data?.error || "AI error");
+
       setLevels(data.levels);
       setRationales(data.rationales || {});
       setSummary(data.summary || data.why || "");
@@ -87,6 +94,8 @@ export default function App() {
     setRationales({});
     setSummary("");
     setErr("");
+    setScenario("");
+    setPdfUrl("");
   };
 
   return (
@@ -100,21 +109,21 @@ export default function App() {
         <textarea
           value={scenario}
           onChange={(e) => setScenario(e.target.value)}
-          placeholder="e.g., angry customer complaint; board prioritization; panel interview; conference networking..."
           className="scenario"
           rows={3}
+          placeholder="e.g., crisis in a hospital ER; boardroom negotiation; performance review; media interview…"
         />
 
         <input
           value={pdfUrl}
-          onChange={(e)=>setPdfUrl(e.target.value)}
+          onChange={(e) => setPdfUrl(e.target.value)}
           className="input"
-          placeholder="Optional: paste share link to a PDF (https://...)"
+          placeholder="Optional PDF share link (https://drive.google.com/..., Dropbox, OneDrive)"
         />
 
         <div className="btn-row">
-          <button className="btn primary" onClick={recommend} disabled={loading || !scenario.trim()}>
-            {loading ? "Thinking..." : "Recommend Dials (AI)"}
+          <button className="btn primary" disabled={loading || !scenario.trim()} onClick={recommend}>
+            {loading ? "Thinking…" : "Recommend Dials (AI)"}
           </button>
           <button className="btn" onClick={reset}>Reset</button>
         </div>
@@ -130,12 +139,11 @@ export default function App() {
         <Legend />
 
         <div className="bars">
-          {TRAITS.map(trait => (
-            <BarRow key={trait.key} name={trait.name} value={levels[trait.key]} />
+          {TRAITS.map(t => (
+            <Bar key={t.key} name={t.name} value={levels[t.key]} />
           ))}
         </div>
 
-        {/* Per-trait commentary */}
         {Object.keys(rationales).length > 0 && (
           <div className="commentary">
             <h3>Trait-by-trait commentary</h3>
@@ -146,9 +154,7 @@ export default function App() {
                 </li>
               ))}
             </ul>
-            <p className="note">
-              Notes: Explanations may quote short snippets from your scenario and (if provided) the PDF.
-            </p>
+            <p className="note">Short quotes may come from your scenario and/or the provided PDF.</p>
           </div>
         )}
       </div>
