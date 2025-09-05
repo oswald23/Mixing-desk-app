@@ -1,6 +1,6 @@
 {
   "name": "mixing-desk-app",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "framer-motion": "^10.16.4",
+    "pdf-parse": "^1.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
