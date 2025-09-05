@@ -1,8 +1,8 @@
 {
-  "name": "mixing-desk-app",
-  "version": "2.1.0",
-  "private": true,
-  "type": "module",
+  "name": "good-psychopath-ai",
+  "version": "1.1.0",
+  "description": "AI-powered dial recommender using GPT and optional PDF grounding (Good Psychopath’s Guide to Success).",
+  "main": "api/recommend.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "framer-motion": "^10.16.4",
-    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^4.4.168",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^4.5.3"
-  }
+  },
+  "type": "module"
 }
