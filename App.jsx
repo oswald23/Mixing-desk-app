@@ -68,7 +68,7 @@ export default function App() {
         body: JSON.stringify({ scenario, pdfUrl: pdfUrl || undefined })
       });
 
-      // Robust: first get raw text, then try JSON
+      // Robust: read as text, then parse JSON
       const raw = await r.text();
       let data;
       try {
