@@ -87,17 +87,28 @@ export default async function handler(req, res) {
       "ruthlessness","fearlessness","impulsivity","selfConfidence","focus",
       "coolness","toughness","charm","charisma","reducedEmpathy","lackConscience"
     ];
-    const model = process.env.OPENAI_MODEL || "gpt-4o"; // use API-available model
+    const model = process.env.OPENAI_MODEL || "gpt-4o";
 
     const system = `
-You are a coaching assistant. Map any scenario to psychopathic trait "dials" (0–10).
-If PDF context is provided, use it (quote tiny phrases). Output STRICT JSON only:
+You are a coaching assistant. Map any scenario to psychopathic trait "dials" (0–10). 
+If a PDF excerpt is provided, use it (quote tiny phrases when helpful).
+
+OUTPUT STRICT JSON ONLY with the following shape:
 {
   "levels": { <traitKey>: 0-10, ... },
-  "rationales": { <traitKey>: "1–2 sentences referencing the scenario and, if useful, tiny quotes from the PDF" },
-  "summary": "2–4 sentences"
+  "rationales": { <traitKey>: "1–2 sentences explaining the level with reference to the scenario (and PDF if useful)" },
+  "behaviors": { <traitKey>: "2–4 concrete behaviors the user should exhibit for this scenario; write as a compact sentence with semicolons" },
+  "summary": "2–4 sentence overview of the dial plan"
 }
-Trait keys: ${traits.join(", ")}.`.trim();
+Trait keys to use exactly: ${traits.join(", ")}.
+
+General guides (override with scenario/PDF):
+- Presentation: ↑ selfConfidence, charisma, charm, coolness; ↓ impulsivity, ruthlessness.
+- Negotiation: ↑ focus, coolness, selfConfidence, charm, (sometimes) ruthlessness; ↓ impulsivity.
+- Crisis: ↑ coolness, focus, fearlessness, toughness; ↓ impulsivity.
+- Difficult talk/firing: ↑ focus, coolness, selfConfidence, slight ↑ ruthlessness; keep empathy higher.
+- Precision work: ↑ coolness, focus, reducedEmpathy; ↓ impulsivity, charm, charisma.
+`.trim();
 
     const user = `
 Scenario:
@@ -135,11 +146,18 @@ ${kb || "(none)"}
     const rawLevels = content?.levels || {};
     const levels = {}; for (const k of traits) levels[k] = clamp10(rawLevels[k]);
 
+    const out = {
+      levels,
+      rationales: content?.rationales || {},
+      behaviors: content?.behaviors || {},
+      summary: content?.summary || ""
+    };
+
     // Optional debug payload so you can see raw PDF text in /pdf-test.html
     const debug = Boolean(body?.debug);
-    const diag = debug ? { pdf: { url: pdfUrl || null, kbChars: (kb || "").length, raw: kb || "" } } : {};
+    if (debug) out.pdf = { url: pdfUrl || null, kbChars: (kb || "").length, raw: kb || "" };
 
-    return sendJson(res, 200, { levels, rationales: content?.rationales || {}, summary: content?.summary || "", ...diag });
+    return sendJson(res, 200, out);
   } catch (e) {
     return sendJson(res, 500, { error: e?.message || "Server error (caught)" });
   }
