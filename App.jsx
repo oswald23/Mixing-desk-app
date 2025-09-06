@@ -55,12 +55,13 @@ export default function App() {
   const [pdfUrl, setPdfUrl] = useState("");
   const [levels, setLevels] = useState(Object.fromEntries(TRAITS.map(t => [t.key, NEUTRAL])));
   const [rationales, setRationales] = useState({});
+  const [behaviors, setBehaviors] = useState({});
   const [summary, setSummary] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
   const recommend = async () => {
-    setLoading(true); setErr(""); setSummary(""); setRationales({});
+    setLoading(true); setErr(""); setSummary(""); setRationales({}); setBehaviors({});
     try {
       const r = await fetch("/api/recommend", {
         method: "POST",
@@ -68,19 +69,16 @@ export default function App() {
         body: JSON.stringify({ scenario, pdfUrl: pdfUrl || undefined })
       });
 
-      // Robust: read as text, then parse JSON
       const raw = await r.text();
       let data;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error(raw ? raw.slice(0, 200) : "Non-JSON response from server");
-      }
+      try { data = JSON.parse(raw); }
+      catch { throw new Error(raw ? raw.slice(0, 200) : "Non-JSON response from server"); }
 
       if (!r.ok) throw new Error(data?.error || "AI error");
 
       setLevels(data.levels);
       setRationales(data.rationales || {});
+      setBehaviors(data.behaviors || {});
       setSummary(data.summary || data.why || "");
     } catch (e) {
       setErr(e.message || "Failed to get recommendation");
@@ -92,6 +90,7 @@ export default function App() {
   const reset = () => {
     setLevels(Object.fromEntries(TRAITS.map(t => [t.key, NEUTRAL])));
     setRationales({});
+    setBehaviors({});
     setSummary("");
     setErr("");
     setScenario("");
@@ -111,7 +110,7 @@ export default function App() {
           onChange={(e) => setScenario(e.target.value)}
           className="scenario"
           rows={3}
-          placeholder="e.g., crisis in a hospital ER; boardroom negotiation; performance review; media interview…"
+          placeholder="e.g., crisis in a hospital ER; boardroom negotiation; performance review; job interview…"
         />
 
         <input
@@ -144,13 +143,20 @@ export default function App() {
           ))}
         </div>
 
-        {Object.keys(rationales).length > 0 && (
+        {(Object.keys(rationales).length > 0 || Object.keys(behaviors).length > 0) && (
           <div className="commentary">
             <h3>Trait-by-trait commentary</h3>
             <ul>
               {TRAITS.map(t => (
-                <li key={t.key}>
-                  <strong>{t.name}:</strong> {rationales[t.key] || "—"}
+                <li key={t.key} style={{ marginBottom: 6 }}>
+                  <strong>{t.name}:</strong>{" "}
+                  {rationales[t.key] || "—"}
+                  {behaviors[t.key] && (
+                    <>
+                      <br />
+                      <em>Suggested behaviors:</em> {behaviors[t.key]}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
