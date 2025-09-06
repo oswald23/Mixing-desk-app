@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Extraction Test</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #f9fafb; color: #111; }
+    input { width: 70%; padding: 6px; margin-bottom: 10px; }
+    button { padding: 6px 12px; margin-left: 8px; cursor: pointer; }
+    pre { background: #111; color: #0f0; padding: 12px; white-space: pre-wrap; word-wrap: break-word; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>📄 PDF Extraction Test</h1>
+  <p>
+    Paste a PDF link (Google Drive, Dropbox, OneDrive).
+    The server will try to extract text and return both <b>raw text</b> and <b>AI JSON</b>.
+  </p>
+
+  <input type="text" id="pdfUrl" placeholder="Enter PDF URL here" />
+  <button onclick="testPdf()">Test PDF</button>
+
+  <h3>AI JSON Response:</h3>
+  <pre id="jsonOut">(nothing yet)</pre>
+
+  <h3>Raw Extracted PDF Text:</h3>
+  <pre id="pdfText">(nothing yet)</pre>
+
+  <script>
+    async function testPdf() {
+      const pdfUrl = document.getElementById("pdfUrl").value;
+      if (!pdfUrl) return alert("Enter a URL");
+
+      const res = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenario: "PDF extraction test only",
+          pdfUrl: pdfUrl,
+          debug: true
+        })
+      });
+
+      const data = await res.json();
+      document.getElementById("jsonOut").textContent = JSON.stringify(data, null, 2);
+
+      if (data.pdf && data.pdf.raw) {
+        document.getElementById("pdfText").textContent = data.pdf.raw.slice(0, 4000);
+      } else {
+        document.getElementById("pdfText").textContent = "(no raw text returned)";
+      }
+    }
+  </script>
+</body>
+</html>
